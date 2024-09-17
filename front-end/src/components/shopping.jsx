@@ -1,26 +1,38 @@
-// src/ShoppingMarket.js
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { ShoppingCart, X, Trash2, Plus, Minus, Facebook, Instagram, Twitter } from 'lucide-react';
-import { addToCart, removeFromCart, updateQuantity } from '../redux/cartSlice';
-
-const items = [
-    { id: 1, title: "Espresso", description: "Rich and bold single shot", image: "https://i.pinimg.com/736x/cb/ee/ab/cbeeabf1e1eee5882e145f3465ada74d.jpg", price: 2.50 },
-    { id: 2, title: "Cappuccino", description: "Espresso with steamed milk and foam", image: "https://i.pinimg.com/564x/4b/65/98/4b6598e5aac6d15608d1459f9a96cc79.jpg", price: 3.50 },
-    { id: 3, title: "Latte", description: "Espresso with lots of steamed milk", image: "https://i.pinimg.com/564x/3b/de/66/3bde660eede0b425a992199c479556c2.jpg", price: 3.75 },
-    { id: 4, title: "Mocha", description: "Espresso with chocolate and steamed milk", image: "https://img.freepik.com/free-photo/dark-chocolate-mocha-frothy-indulgence-saucer-generated-by-ai_188544-22903.jpg", price: 4.00 },
-    { id: 5, title: "Croissant", description: "Buttery, flaky pastry", image: "https://i.pinimg.com/564x/8b/34/39/8b3439a82c12879719290dc04da5a05b.jpg", price: 2.25 },
-    { id: 6, title: "Blueberry Muffin", description: "Moist muffin loaded with blueberries", image: "https://i.pinimg.com/564x/ac/ba/46/acba46775b46a9966d956cf524cd84b9.jpg", price: 2.75 },
-    { id: 7, title: "Cheesecake", description: "Creamy New York style cheesecake", image: "https://i.pinimg.com/564x/92/f3/5e/92f35eaaf2ae0c0ca545e79e1f531516.jpg", price: 4.50 },
-    { id: 8, title: "Iced Tea", description: "Refreshing black tea over ice", image: "https://img.pikbest.com/wp/202345/mint-leaves-cup-with-ice-tea-and-on-a-dark-background_9585688.jpg!bw700", price: 2.00 },
-    { id: 9, title: "Fruit Smoothie", description: "Blend of seasonal fruits", image: "https://png.pngtree.com/background/20230610/original/pngtree-this-smoothie-shake-contains-blackberries-picture-image_3024300.jpg", price: 4.25 },
-    { id: 10, title: "Pancakes", description: "Fluffy pancakes with maple syrup", image: "https://i.pinimg.com/564x/6d/e1/a8/6de1a8ddb5b3b0234cc21c1befafd7aa.jpg", price: 3.75 },
-];
+import { addToCart, removeFromCart, updateQuantity, clearDeletedProducts } from '../redux/cartSlice';
 
 const ShoppingMarket = () => {
     const dispatch = useDispatch();
     const cart = useSelector(state => state.cart);
-    const [isCartOpen, setIsCartOpen] = React.useState(false);
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const [items, setItems] = useState([]);
+
+    useEffect(() => {
+        const fetchProducts = () => {
+            const storedProducts = JSON.parse(localStorage.getItem('products'));
+            if (storedProducts && storedProducts.length > 0) {
+                setItems(storedProducts);
+                
+                // Check if any products in the cart have been deleted
+                const deletedProductIds = cart.filter(cartItem => 
+                    !storedProducts.some(product => product.id === cartItem.id)
+                ).map(item => item.id);
+                
+                if (deletedProductIds.length > 0) {
+                    dispatch(clearDeletedProducts(deletedProductIds));
+                }
+            }
+        };
+
+        fetchProducts();
+        // Set up an interval to check for product updates every 5 seconds
+        const intervalId = setInterval(fetchProducts, 5000);
+
+        // Clean up the interval on component unmount
+        return () => clearInterval(intervalId);
+    }, [dispatch]);
 
     useEffect(() => {
         localStorage.setItem('cart', JSON.stringify(cart));

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Coffee, User, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Coffee, User, Mail, Lock, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from "axios"
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isAdminLogin, setIsAdminLogin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -14,14 +16,31 @@ const AuthPage = () => {
 
   useEffect(() => {
     setError('');
-  }, [isLogin, email, password, name]);
+  }, [isLogin, isAdminLogin, email, password, name]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (isLogin) {
-      // Login logic (unchanged)
+    if (isAdminLogin) {
+      // Admin login logic (unchanged)
+      if (email === 'admin@gmail.com' && password === 'admin123') {
+        navigate('/admin');
+      } else {
+        setError('Invalid admin credentials');
+      }
+    } else if (isLogin) {
+      // User login logic
+      const response = axios.post("http://localhost:5000/db/users/log-in", { email, password })
+        .then(navigate('/shopping'))
+        .catch(() => { setError('Invalid email or password') });
     } else {
-      // Sign up logic (unchanged)
+      // console.log(name, email, password);
+
+      const response = axios.post("http://localhost:5000/db/users/register", { name, email, password })
+        .then(res => { console.log(res.data) })
+        .catch(err => { console.log(err) });
+
+      setIsLogin(true); // Switch to login form after successful signup
+      setError('Account created successfully. Please log in.');
     }
   };
 
@@ -37,6 +56,12 @@ const AuthPage = () => {
     duration: 0.5
   };
 
+  const formVariants = {
+    hidden: { opacity: 0, x: '-100%' },
+    visible: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: '100%' }
+  };
+
   return (
     <motion.div
       initial="initial"
@@ -49,11 +74,11 @@ const AuthPage = () => {
       <div className="max-w-md w-full space-y-8 bg-[#ECDFCC] p-8 rounded-lg shadow-2xl">
         <div className="text-center">
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
             transition={{ type: 'spring', stiffness: 260, damping: 20 }}
           >
-            <Coffee size={48} className="mx-auto text-[#034c52]" />
+            <Coffee size={64} className="mx-auto text-[#034c52]" />
           </motion.div>
           <motion.h2
             initial={{ opacity: 0 }}
@@ -61,7 +86,7 @@ const AuthPage = () => {
             transition={{ delay: 0.2 }}
             className="mt-6 text-3xl font-extrabold text-[#034c52]"
           >
-            {isLogin ? 'Welcome back to ACafe' : 'Join ACafe today'}
+            {isAdminLogin ? 'Admin Login' : isLogin ? 'Welcome back to ACafe' : 'Join ACafe today'}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -69,20 +94,34 @@ const AuthPage = () => {
             transition={{ delay: 0.3 }}
             className="mt-2 text-sm text-[#034c52]"
           >
-            {isLogin ? 'Sign in to your account' : 'Create your account'}
+            {isAdminLogin ? 'Sign in to admin account' : isLogin ? 'Sign in to your account' : 'Create your account'}
           </motion.p>
         </div>
+
+        {isAdminLogin && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-gray-100 p-4 rounded-md text-sm"
+          >
+            <p><strong>Admin Email:</strong> admin@gmail.com</p>
+            <p><strong>Admin Password:</strong> admin123</p>
+          </motion.div>
+        )}
+
         <AnimatePresence mode="wait">
           <motion.form
-            key={isLogin ? 'login' : 'signup'}
-            initial={{ opacity: 0, x: isLogin ? -100 : 100 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: isLogin ? 100 : -100 }}
+            key={isAdminLogin ? 'admin' : isLogin ? 'login' : 'signup'}
+            variants={formVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             transition={{ type: 'tween', ease: 'easeInOut', duration: 0.3 }}
             className="mt-8 space-y-6"
             onSubmit={handleSubmit}
           >
-            {!isLogin && (
+            {!isLogin && !isAdminLogin && (
               <div className="rounded-md shadow-sm -space-y-px">
                 <div>
                   <label htmlFor="name" className="sr-only">Name</label>
@@ -117,7 +156,7 @@ const AuthPage = () => {
                     type="email"
                     autoComplete="email"
                     required
-                    className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${isLogin ? 'rounded-t-md' : ''} focus:outline-none focus:ring-[#034c52] focus:border-[#034c52] focus:z-10 sm:text-sm pl-10`}
+                    className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${isLogin || isAdminLogin ? 'rounded-t-md' : ''} focus:outline-none focus:ring-[#034c52] focus:border-[#034c52] focus:z-10 sm:text-sm pl-10`}
                     placeholder="Email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -175,20 +214,33 @@ const AuthPage = () => {
                 whileTap={{ scale: 0.95 }}
                 className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-[#ECDFCC] bg-[#034c52] hover:bg-[#023c41] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#034c52] transition-colors duration-200"
               >
-                {isLogin ? 'Sign in' : 'Sign up'}
+                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                  {isAdminLogin ? <Lock className="h-5 w-5" aria-hidden="true" /> : <ShoppingBag className="h-5 w-5" aria-hidden="true" />}
+                </span>
+                {isAdminLogin ? 'Admin Sign in' : isLogin ? 'Sign in' : 'Sign up'}
               </motion.button>
             </div>
           </motion.form>
         </AnimatePresence>
 
-        <div className="text-center mt-4">
+        <div className="text-center mt-4 space-y-2">
+          {!isAdminLogin && (
+            <motion.button
+              onClick={() => setIsLogin(!isLogin)}
+              className="font-medium text-[#034c52] hover:text-[#023c41] transition-colors duration-200"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {isLogin ? 'Need an account? Sign up' : 'Already have an account? Log in'}
+            </motion.button>
+          )}
           <motion.button
-            onClick={() => setIsLogin(!isLogin)}
-            className="font-medium text-[#034c52] hover:text-[#023c41] transition-colors duration-200"
+            onClick={() => setIsAdminLogin(!isAdminLogin)}
+            className="font-medium text-[#034c52] hover:text-[#023c41] transition-colors duration-200 block w-full"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            {isLogin ? 'Need an account? Sign up' : 'Already have an account? Log in'}
+            {isAdminLogin ? 'Back to User Login' : 'Admin Login'}
           </motion.button>
         </div>
       </div>

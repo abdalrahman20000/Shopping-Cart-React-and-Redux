@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Coffee, Star, ChevronRight, ShoppingCart, Facebook, Instagram, Twitter } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -36,6 +36,17 @@ const testimonials = [
 
 const HomePage = () => {
     const navigate = useNavigate();
+    const [trendingProducts, setTrendingProducts] = useState([]);
+
+    useEffect(() => {
+        const storedProducts = JSON.parse(localStorage.getItem('products'));
+        if (storedProducts && storedProducts.length > 0) {
+            // Sort products by rating (assuming each product has a rating property)
+            const sortedProducts = storedProducts.sort((a, b) => b.rating - a.rating);
+            // Take the top 10 products or less if there are fewer than 10
+            setTrendingProducts(sortedProducts.slice(0, 10));
+        }
+    }, []);
 
     return (
         <div className="min-h-screen bg-[#034c52] text-[#ECDFCC]">
@@ -48,8 +59,8 @@ const HomePage = () => {
                     </div>
                     <nav className="mb-4 md:mb-0">
                         <ul className="flex flex-wrap justify-center space-x-4">
-                            <li><a href="#" className="hover:text-white transition-colors">Home</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">Menu</a></li>
+                            <li><a href="/" className="hover:text-white transition-colors">Home</a></li>
+                            <li><a href="/menu" className="hover:text-white transition-colors">Menu</a></li>
                             <li><a href="/about" className="hover:text-white transition-colors">About</a></li>
                             <li><a href="/contact" className="hover:text-white transition-colors">Contact</a></li>
                         </ul>
@@ -128,11 +139,12 @@ const HomePage = () => {
                                 <motion.div
                                     whileHover={{ scale: 1.05 }}
                                     className="bg-[#ECDFCC] rounded-lg overflow-hidden shadow-lg h-80"
+                                    // onClick={() => navigate('/auth')}
                                 >
                                     <div className="relative h-full">
                                         <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                                         <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-4">
-                                            <h3 className="text-white font-semibold text-lg mb-2">{product.name}</h3>
+                                            <h3 className="text-white font-semibold text-lg mb-2">{product.title}</h3>
                                             <div className="flex justify-between items-center">
                                                 <span className="text-white font-bold">${product.price.toFixed(2)}</span>
                                                 <div className="flex items-center">
@@ -140,14 +152,6 @@ const HomePage = () => {
                                                     <span className="text-white">{product.rating}</span>
                                                 </div>
                                             </div>
-                                            <motion.button
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                                className="mt-2 bg-[#ECDFCC] text-[#034c52] px-4 py-2 rounded-full w-full font-semibold hover:bg-[#d8c9b3] transition-colors"
-                                                onClick={() => navigate('/auth')}
-                                            >
-                                                Buy Now
-                                            </motion.button>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -243,7 +247,7 @@ const HomePage = () => {
                             className="bg-[#ECDFCC] p-6 rounded-lg shadow-lg overflow-hidden"
                         >
                             <a href="https://www.ncausa.org/About-Coffee/History-of-Coffee"
-                            target='blank'>
+                                target='blank'>
                                 <div className="flex items-center mb-4">
                                     <img src="https://www.vermaoffset.com/wp-content/uploads/2024/05/61-copy-2.jpg" alt="Coffee Origins" className="w-1/3 h-32 object-cover rounded-lg mr-4" />
                                     <div>
@@ -309,22 +313,14 @@ const HomePage = () => {
                         <h3 className="text-xl font-bold mb-2">ACafe</h3>
                         <p className="text-sm">Brewing perfection since 2010</p>
                     </div>
-                    <nav className="mb-4 md:mb-0">
-                        <ul className="flex space-x-4">
-                            <li><a href="#" className="hover:text-white transition-colors">Home</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">Menu</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-                        </ul>
-                    </nav>
+                    <div className="container mx-auto mt-8 text-center text-sm">
+                    <p>&copy; 2024 ACafe. All rights reserved.</p>
+                </div>
                     <div className="flex space-x-4">
                         <a href="#" className="hover:text-white transition-colors"><Facebook size={24} /></a>
                         <a href="#" className="hover:text-white transition-colors"><Instagram size={24} /></a>
                         <a href="#" className="hover:text-white transition-colors"><Twitter size={24} /></a>
                     </div>
-                </div>
-                <div className="container mx-auto mt-8 text-center text-sm">
-                    <p>&copy; 2024 ACafe. All rights reserved.</p>
                 </div>
             </footer>
         </div>
